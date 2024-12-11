@@ -18,6 +18,7 @@ public class UserCreationRequest {
     @NotBlank(message = "user email must not be blank")
     private String userEmail;
 
+    private String password;
 
     private String userAddress;
 

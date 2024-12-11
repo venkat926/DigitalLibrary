@@ -34,6 +34,11 @@ public class UserController {
         return new ResponseEntity<>(returnObject, HttpStatus.OK);
     }
 
+    @PostMapping("/addAdmin")
+    public UserCreationResponse addAdmin(@RequestBody @Validated UserCreationRequest request) {
+        return userService.addAdmin(request);
+    }
+
     @GetMapping("/filter")
     public ResponseEntity<GenericReturnClass> filterUsers(@NotNull(message = "filterBy can not be NULL") @RequestParam("filterBy") UserFilter userFilter,
                                                           @NotNull(message = "Operator can not be NULL") @RequestParam("operator") Operator operator,

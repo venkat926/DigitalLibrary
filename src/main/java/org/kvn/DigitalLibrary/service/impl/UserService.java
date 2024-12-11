@@ -10,12 +10,22 @@ import org.kvn.DigitalLibrary.repository.UserRepository;
 import org.kvn.DigitalLibrary.service.userFilter.UserFilterFactory;
 import org.kvn.DigitalLibrary.service.userFilter.UserFilterStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-public class UserService {
+public class UserService  implements UserDetailsService {
+
+    @Value("${student.authority}")
+    private String studentAuthority;
+    @Value("${admin.authority}")
+    private String adminAuthority;
 
     @Autowired
     private UserRepository userRepository;
@@ -23,9 +33,15 @@ public class UserService {
     @Autowired
     private UserFilterFactory userFilterFactory;
 
+    @Autowired
+    private PasswordEncoder encoder;
+
+
     public UserCreationResponse addStudent(UserCreationRequest request) {
         User user = request.toUser();
         user.setUserType(UserType.STUDENT);
+        user.setPassword(encoder.encode(request.getPassword()));
+        user.setAuthorities(studentAuthority);
         User userFromDb = userRepository.save(user);
         return UserCreationResponse.builder()
                 .userName(userFromDb.getName())
@@ -42,5 +58,24 @@ public class UserService {
 
     public User checkIfUserIsValid(String userEmail) {
         return userRepository.findByEmail(userEmail);
+    }
+
+    public UserCreationResponse addAdmin(UserCreationRequest request) {
+        User user = request.toUser();
+        user.setUserType(UserType.ADMIN);
+        user.setPassword(encoder.encode(request.getPassword()));
+        user.setAuthorities(adminAuthority);
+        User userFromDb = userRepository.save(user);
+        return UserCreationResponse.builder().
+                userName(userFromDb.getName()).
+                userAddress(userFromDb.getAddress()).
+                userEmail(userFromDb.getEmail()).
+                userPhone(userFromDb.getPhoneNo()).
+                build();
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        return userRepository.findByEmail(email);
     }
 }
