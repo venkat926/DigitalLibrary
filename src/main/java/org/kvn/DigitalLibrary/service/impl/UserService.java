@@ -6,6 +6,7 @@ import org.kvn.DigitalLibrary.enums.Operator;
 import org.kvn.DigitalLibrary.enums.UserFilter;
 import org.kvn.DigitalLibrary.enums.UserType;
 import org.kvn.DigitalLibrary.model.User;
+import org.kvn.DigitalLibrary.repository.UserCacheRepository;
 import org.kvn.DigitalLibrary.repository.UserRepository;
 import org.kvn.DigitalLibrary.service.userFilter.UserFilterFactory;
 import org.kvn.DigitalLibrary.service.userFilter.UserFilterStrategy;
@@ -35,6 +36,9 @@ public class UserService  implements UserDetailsService {
 
     @Autowired
     private PasswordEncoder encoder;
+
+    @Autowired
+    private UserCacheRepository userCacheRepository;
 
 
     public UserCreationResponse addStudent(UserCreationRequest request) {
@@ -76,6 +80,14 @@ public class UserService  implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        return userRepository.findByEmail(email);
+        User user = userCacheRepository.getUser(email);
+        if (user != null) {
+            return user;
+        }
+        user = userRepository.findByEmail(email);
+        if (user == null)
+            throw new UsernameNotFoundException("No User Found");
+        userCacheRepository.setUser(email, user);
+        return user;
     }
 }
